@@ -1,0 +1,60 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des enfants{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Liste des enfants</h1>
+            <a href="{{ path('app_enfant_new') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nouvel enfant
+            </a>
+        </div>
+
+        {% for message in app.flashes('success') %}
+            <div class="alert alert-success">
+                {{ message }}
+            </div>
+        {% endfor %}
+
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Prénom</th>
+                        <th>Date de naissance</th>
+                        <th>Allergies</th>
+                        <th>Responsables</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for enfant in enfants %}
+                    <tr>
+                        <td>{{ enfant.nom }}</td>
+                        <td>{{ enfant.prenom }}</td>
+                        <td>{{ enfant.dateNaissance|date('d/m/Y') }}</td>
+                        <td>{{ enfant.allergies }}</td>
+                        <td>
+                            {% for responsable in enfant.responsables %}
+                                {{ responsable.prenom }} {{ responsable.nom }}{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td>
+                            <a href="{{ path('app_enfant_edit', {'id': enfant.id}) }}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {{ include('enfant/_delete_form.html.twig') }}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center">Aucun enfant trouvé</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

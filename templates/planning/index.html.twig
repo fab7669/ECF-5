@@ -1,0 +1,552 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Planning de présence{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <h1>Planning de présence</h1>
+        
+        <!-- Mode de vue: semaine/mois -->
+        <div class="mb-3">
+            <div class="btn-group" role="group">
+                <input type="radio" class="btn-check" name="viewMode" id="weekView" autocomplete="off" checked>
+                <label class="btn btn-outline-primary" for="weekView">Vue Semaine</label>
+
+                <input type="radio" class="btn-check" name="viewMode" id="monthView" autocomplete="off">
+                <label class="btn btn-outline-primary" for="monthView">Vue Mois</label>
+            </div>
+        </div>
+        
+        <!-- Navigation semaine/mois -->
+        <div class="mb-4">
+            <div class="btn-group">
+                <button id="prev-period" class="btn btn-outline-primary">Précédent</button>
+                <button id="current-period" class="btn btn-outline-primary">Aujourd'hui</button>
+                <button id="next-period" class="btn btn-outline-primary">Suivant</button>
+            </div>
+            <span id="period-display" class="ms-3 fw-bold"></span>
+        </div>
+        
+        <!-- Planning Hebdomadaire -->
+        <div id="weeklyView" class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Planning hebdomadaire</span>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#presenceModal">
+                    <i class="fas fa-plus"></i> Ajouter une présence
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th style="width: 200px;">Enfant</th>
+                                <th>Lundi</th>
+                                <th>Mardi</th>
+                                <th>Mercredi</th>
+                                <th>Jeudi</th>
+                                <th>Vendredi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for enfant in enfants %}
+                                <tr data-enfant-id="{{ enfant.id }}">
+                                    <td class="fw-bold">{{ enfant.prenom }} {{ enfant.nom }}</td>
+                                    {% for jour in 0..4 %}
+                                        <td class="presence-cell" data-jour="{{ jour }}" data-enfant-id="{{ enfant.id }}">
+                                            <div class="presence-content"></div>
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center">Aucun enfant inscrit</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Planning Mensuel -->
+        <div id="monthlyView" class="card" style="display: none;">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Planning mensuel</span>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#presenceModal">
+                    <i class="fas fa-plus"></i> Ajouter une présence
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered calendar-table">
+                        <thead>
+                            <tr>
+                                <th>Lun</th>
+                                <th>Mar</th>
+                                <th>Mer</th>
+                                <th>Jeu</th>
+                                <th>Ven</th>
+                                <th>Sam</th>
+                                <th>Dim</th>
+                            </tr>
+                        </thead>
+                        <tbody id="calendar-body">
+                            <!-- Le corps du calendrier sera généré dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal pour ajouter une présence -->
+    <div class="modal fade" id="presenceModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nouvelle présence</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="presenceForm">
+                        <div class="mb-3">
+                            <label for="enfant-select" class="form-label">Enfant</label>
+                            <select id="enfant-select" class="form-select" required>
+                                <option value="">Sélectionnez un enfant</option>
+                                {% for enfant in enfants %}
+                                    <option value="{{ enfant.id }}">{{ enfant.prenom }} {{ enfant.nom }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="date-select" class="form-label">Date</label>
+                            <input type="date" id="date-select" class="form-control" required>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label for="heure-debut" class="form-label">Heure d'arrivée</label>
+                                <select id="heure-debut" class="form-select" required>
+                                    {% for h in 7..17 %}
+                                        <option value="{{ h }}:00">{{ h }}:00</option>
+                                        <option value="{{ h }}:30">{{ h }}:30</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col">
+                                <label for="heure-fin" class="form-label">Heure de départ</label>
+                                <select id="heure-fin" class="form-select" required>
+                                    {% for h in 8..18 %}
+                                        <option value="{{ h }}:00">{{ h }}:00</option>
+                                        <option value="{{ h }}:30">{{ h }}:30</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" id="save-presence">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal pour voir les détails des présences d'un jour -->
+    <div class="modal fade" id="dayDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="dayDetailsTitle">Présences du jour</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="dayDetailsList" class="list-group">
+                        <!-- Les présences seront affichées ici -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .presence-cell {
+            height: 60px;
+            position: relative;
+        }
+        .presence-content {
+            min-height: 30px;
+        }
+        .presence-block {
+            position: relative;
+            margin: 2px 0;
+            padding: 3px 5px;
+            border-radius: 3px;
+            background-color: #a3cfbb;
+            border-left: 3px solid #198754;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .calendar-table th, .calendar-table td {
+            width: 14.28%;
+            height: 100px;
+            vertical-align: top;
+            padding: 5px;
+        }
+        .calendar-day {
+            font-weight: bold;
+            margin-bottom: 5px;
+            padding: 2px;
+        }
+        .calendar-day.other-month {
+            color: #aaa;
+            background-color: #f8f9fa;
+        }
+        .calendar-day.today {
+            background-color: #e9ecef;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .day-presence-count {
+            font-size: 0.8rem;
+            background-color: #a3cfbb;
+            color: #1d5632;
+            border-radius: 10px;
+            padding: 2px 6px;
+            margin: 2px;
+            display: inline-block;
+            cursor: pointer;
+        }
+    </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Variable globale pour stocker toutes les présences
+            let allPresences = [];
+
+            // Variables pour la gestion des périodes
+            const msPerDay = 86400000;
+            let currentDate = new Date();
+            let currentWeekStart = getWeekStartDate(currentDate);
+            let currentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+            let currentView = 'week'; // 'week' ou 'month'
+            
+            // Initialisation du planning
+            updatePeriodDisplay();
+            loadPresences();
+            generateCalendar();
+            
+            // Gestion du changement de vue
+            document.getElementById('weekView').addEventListener('change', function() {
+                if (this.checked) {
+                    currentView = 'week';
+                    document.getElementById('weeklyView').style.display = 'block';
+                    document.getElementById('monthlyView').style.display = 'none';
+                    updatePeriodDisplay();
+                    loadPresences();
+                }
+            });
+            
+            document.getElementById('monthView').addEventListener('change', function() {
+                if (this.checked) {
+                    currentView = 'month';
+                    document.getElementById('weeklyView').style.display = 'none';
+                    document.getElementById('monthlyView').style.display = 'block';
+                    updatePeriodDisplay();
+                    loadPresences();
+                }
+            });
+            
+            // Gestion des boutons de navigation
+            document.getElementById('prev-period').addEventListener('click', function() {
+                if (currentView === 'week') {
+                    currentWeekStart = new Date(currentWeekStart.getTime() - 7 * msPerDay);
+                } else {
+                    currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
+                }
+                updatePeriodDisplay();
+                loadPresences();
+            });
+            
+            document.getElementById('current-period').addEventListener('click', function() {
+                if (currentView === 'week') {
+                    currentWeekStart = getWeekStartDate(new Date());
+                } else {
+                    currentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                }
+                updatePeriodDisplay();
+                loadPresences();
+            });
+            
+            document.getElementById('next-period').addEventListener('click', function() {
+                if (currentView === 'week') {
+                    currentWeekStart = new Date(currentWeekStart.getTime() + 7 * msPerDay);
+                } else {
+                    currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+                }
+                updatePeriodDisplay();
+                loadPresences();
+            });
+            
+            // Gestion du formulaire d'ajout de présence
+            document.getElementById('save-presence').addEventListener('click', function() {
+                const enfantId = document.getElementById('enfant-select').value;
+                const date = document.getElementById('date-select').value;
+                const heureDebut = document.getElementById('heure-debut').value;
+                const heureFin = document.getElementById('heure-fin').value;
+                
+                if (!enfantId || !date || !heureDebut || !heureFin) {
+                    alert('Veuillez remplir tous les champs');
+                    return;
+                }
+                
+                const data = {
+                    enfant_id: enfantId,
+                    date: date,
+                    heureDebut: heureDebut,
+                    heureFin: heureFin
+                };
+                
+                fetch('{{ path('app_planning_new_presence') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        // Fermeture du modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('presenceModal'));
+                        modal.hide();
+                        
+                        // Réinitialisation du formulaire
+                        document.getElementById('presenceForm').reset();
+                        
+                        // Rechargement des présences
+                        loadPresences();
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    alert('Une erreur est survenue');
+                });
+            });
+            
+            // Fonction pour obtenir le premier jour de la semaine (lundi)
+            function getWeekStartDate(date) {
+                const day = date.getDay(); // 0 = Dimanche, 1 = Lundi, ..., 6 = Samedi
+                const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Ajustement pour avoir lundi comme premier jour
+                const monday = new Date(date);
+                monday.setDate(diff);
+                return new Date(monday.getFullYear(), monday.getMonth(), monday.getDate());
+            }
+            
+            // Fonction pour mettre à jour l'affichage de la période
+            function updatePeriodDisplay() {
+                let periodText = '';
+                
+                if (currentView === 'week') {
+                    const weekEnd = new Date(currentWeekStart);
+                    weekEnd.setDate(weekEnd.getDate() + 4);
+                    
+                    const options = { day: 'numeric', month: 'long', year: 'numeric' };
+                    periodText = `Du ${currentWeekStart.toLocaleDateString('fr-FR', options)} au ${weekEnd.toLocaleDateString('fr-FR', options)}`;
+                    
+                    // Mettre à jour la date par défaut dans le formulaire
+                    document.getElementById('date-select').valueAsDate = currentWeekStart;
+                } else {
+                    const options = { month: 'long', year: 'numeric' };
+                    periodText = currentMonth.toLocaleDateString('fr-FR', options);
+                    
+                    // Mettre à jour la date par défaut dans le formulaire
+                    document.getElementById('date-select').valueAsDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+                }
+                
+                document.getElementById('period-display').textContent = periodText;
+            }
+            
+            // Fonction pour charger les présences
+            function loadPresences() {
+                // Réinitialiser toutes les cellules
+                document.querySelectorAll('.presence-content').forEach(cell => {
+                    cell.innerHTML = '';
+                });
+                
+                // Charger les présences
+                fetch('{{ path('app_planning_presences') }}')
+                    .then(response => response.json())
+                    .then(presences => {
+                        allPresences = presences;
+                        
+                        if (currentView === 'week') {
+                            // Vue hebdomadaire : afficher les présences dans la semaine courante
+                            displayWeekPresences(presences);
+                        } else {
+                            // Vue mensuelle : les présences seront affichées lors de la génération du calendrier
+                            generateCalendar();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur de chargement des présences:', error);
+                    });
+            }
+            
+            // Fonction pour afficher les présences en vue hebdomadaire
+            function displayWeekPresences(presences) {
+                const weekStartTime = currentWeekStart.getTime();
+                const weekEndTime = new Date(currentWeekStart.getTime() + 5 * msPerDay).getTime(); // 5 jours (lundi au vendredi)
+                
+                presences.forEach(presence => {
+                    const presenceDate = new Date(presence.date);
+                    
+                    // Vérifier si la présence est dans la semaine courante
+                    if (presenceDate.getTime() >= weekStartTime && presenceDate.getTime() < weekEndTime) {
+                        // Calculer l'indice du jour (0 = Lundi, 1 = Mardi, ...) par rapport au début de semaine
+                        const daysDiff = Math.floor((presenceDate.getTime() - weekStartTime) / msPerDay);
+                        
+                        // Trouver la cellule correspondante
+                        const cell = document.querySelector(`.presence-cell[data-jour="${daysDiff}"][data-enfant-id="${presence.enfant.id}"] .presence-content`);
+                        
+                        if (cell) {
+                            // Créer le bloc de présence
+                            const presenceBlock = document.createElement('div');
+                            presenceBlock.className = 'presence-block';
+                            presenceBlock.textContent = `${presence.heureDebut} - ${presence.heureFin}`;
+                            presenceBlock.setAttribute('data-presence-id', presence.id);
+                            cell.appendChild(presenceBlock);
+                        }
+                    }
+                });
+            }
+            
+            // Fonction pour générer le calendrier mensuel
+            function generateCalendar() {
+                const year = currentMonth.getFullYear();
+                const month = currentMonth.getMonth();
+                
+                // Obtenir le premier jour du mois
+                const firstDay = new Date(year, month, 1);
+                // Obtenir le dernier jour du mois
+                const lastDay = new Date(year, month + 1, 0);
+                
+                // Trouver le premier lundi à afficher (peut être dans le mois précédent)
+                let startDate = new Date(firstDay);
+                const firstDayOfWeek = firstDay.getDay() || 7; // Dimanche = 0, Lundi = 1, ..., Samedi = 6
+                startDate.setDate(startDate.getDate() - (firstDayOfWeek - 1));
+                
+                // Générer les lignes de semaines
+                const calendarBody = document.getElementById('calendar-body');
+                calendarBody.innerHTML = '';
+                
+                let date = new Date(startDate);
+                let presencesByDate = groupPresencesByDate(allPresences);
+                
+                for (let week = 0; week < 6; week++) {
+                    // Vérifier si cette semaine est encore dans le mois ou si on a dépassé le mois
+                    if (week > 0 && date.getTime() > lastDay.getTime()) break;
+                    
+                    const row = document.createElement('tr');
+                    
+                    for (let day = 0; day < 7; day++) {
+                        const cell = document.createElement('td');
+                        const isOtherMonth = date.getMonth() !== month;
+                        const isToday = date.toDateString() === new Date().toDateString();
+                        
+                        // Créer l'en-tête du jour
+                        const dayHeader = document.createElement('div');
+                        dayHeader.className = `calendar-day${isOtherMonth ? ' other-month' : ''}${isToday ? ' today' : ''}`;
+                        dayHeader.textContent = date.getDate();
+                        cell.appendChild(dayHeader);
+                        
+                        // Si le jour n'est pas dans le mois courant, le griser
+                        if (isOtherMonth) {
+                            cell.style.backgroundColor = '#f8f9fa';
+                        }
+                        
+                        // Ajouter les présences pour ce jour si elles existent
+                        const dateStr = date.toISOString().split('T')[0];
+                        if (presencesByDate[dateStr] && !isOtherMonth) {
+                            const countSpan = document.createElement('div');
+                            countSpan.className = 'day-presence-count';
+                            countSpan.textContent = `${presencesByDate[dateStr].length} présence(s)`;
+                            
+                            // Ajouter un événement pour afficher les détails des présences
+                            countSpan.addEventListener('click', () => showDayDetails(date, presencesByDate[dateStr]));
+                            
+                            cell.appendChild(countSpan);
+                        }
+                        
+                        row.appendChild(cell);
+                        
+                        // Passer au jour suivant
+                        date = new Date(date.getTime() + msPerDay);
+                    }
+                    
+                    calendarBody.appendChild(row);
+                }
+            }
+            
+            // Fonction pour grouper les présences par date
+            function groupPresencesByDate(presences) {
+                const grouped = {};
+                
+                presences.forEach(presence => {
+                    const dateStr = presence.date;
+                    if (!grouped[dateStr]) {
+                        grouped[dateStr] = [];
+                    }
+                    grouped[dateStr].push(presence);
+                });
+                
+                return grouped;
+            }
+            
+            // Fonction pour afficher les détails des présences d'un jour
+            function showDayDetails(date, presences) {
+                const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+                const dateStr = date.toLocaleDateString('fr-FR', options);
+                
+                document.getElementById('dayDetailsTitle').textContent = `Présences du ${dateStr}`;
+                
+                const detailsList = document.getElementById('dayDetailsList');
+                detailsList.innerHTML = '';
+                
+                presences.forEach(presence => {
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item';
+                    item.innerHTML = `
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">${presence.enfant.prenom} ${presence.enfant.nom}</h5>
+                            <small>${presence.heureDebut} - ${presence.heureFin}</small>
+                        </div>
+                    `;
+                    detailsList.appendChild(item);
+                });
+                
+                // Afficher le modal
+                const dayDetailsModal = new bootstrap.Modal(document.getElementById('dayDetailsModal'));
+                dayDetailsModal.show();
+            }
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvel enfant{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <h1>Ajouter un nouvel enfant</h1>
+
+        {{ form_start(form) }}
+            <div class="card mb-3">
+                <div class="card-header">Informations de l'enfant</div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ form_row(form.nom) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_row(form.prenom) }}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ form_row(form.dateNaissance) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_row(form.allergies) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header">Responsables légaux existants</div>
+                <div class="card-body">
+                    {% if form.responsables.vars.choices is empty %}
+                        <p class="text-muted">Aucun responsable existant. Veuillez en créer un nouveau ci-dessous.</p>
+                    {% else %}
+                        {{ form_widget(form.responsables) }}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header">Ajouter un nouveau responsable légal</div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ form_row(form.nouveauResponsable.nom) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_row(form.nouveauResponsable.prenom) }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ form_row(form.nouveauResponsable.telephone) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_row(form.nouveauResponsable.email) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <button class="btn btn-primary">{{ button_label|default('Enregistrer') }}</button>
+                <a href="{{ path('app_enfant_index') }}" class="btn btn-secondary">Retour à la liste</a>
+            </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

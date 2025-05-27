@@ -1,0 +1,52 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de l'enfant{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <h1>Détails de l'enfant</h1>
+
+        <div class="card">
+            <div class="card-body">
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <th>Nom</th>
+                            <td>{{ enfant.nom }}</td>
+                        </tr>
+                        <tr>
+                            <th>Prénom</th>
+                            <td>{{ enfant.prenom }}</td>
+                        </tr>
+                        <tr>
+                            <th>Date de naissance</th>
+                            <td>{{ enfant.dateNaissance ? enfant.dateNaissance|date('d/m/Y') : '' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Allergies</th>
+                            <td>{{ enfant.allergies }}</td>
+                        </tr>
+                        <tr>
+                            <th>Responsables</th>
+                            <td>
+                                <ul class="list-unstyled">
+                                {% for responsable in enfant.responsables %}
+                                    <li>{{ responsable.prenom }} {{ responsable.nom }}</li>
+                                {% else %}
+                                    <li>Aucun responsable associé</li>
+                                {% endfor %}
+                                </ul>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <a href="{{ path('app_enfant_edit', {'id': enfant.id}) }}" class="btn btn-warning">Modifier</a>
+            {{ include('enfant/_delete_form.html.twig') }}
+            <a href="{{ path('app_enfant_index') }}" class="btn btn-secondary">Retour à la liste</a>
+        </div>
+    </div>
+{% endblock %}
